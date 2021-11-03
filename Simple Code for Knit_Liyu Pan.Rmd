@@ -1,0 +1,302 @@
+---
+title: "Disappearance of long-term effectiveness of peer-led smoking prevention and adolescent friendship networks"
+author: "Liyu Pan"
+date: "4/3/2020"
+output: pdf_document
+fontsize: 12pt
+header-includes:
+  - \usepackage{leading}
+  - \leading{18pt}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, error = F, warning = F)
+```
+
+```{r, include=FALSE}
+setwd("C:/Users/LiyuP/Desktop/SNA final")
+load("ASSIST-c21.RData")
+load("SNA Final results.RData")
+
+library(tidyverse)
+library(RSiena)
+library(reshape2)
+library(kableExtra)
+library(igraph)
+library(sna)
+library(stargazer)
+
+
+```
+
+
+### Abstract
+
+In recent decades, the number of smoking teenagers is rising remarkably in many countries. In order to reduce the smoking prevalence among adolescents, school-based peer-led prevention approaches have been used widely for decades. Evidence has been found for immediate positive effects in most schools, but a number of cases ended up with no long-term effectiveness. This study examines a one school cohort in a secondary school in a peer-led program with respect to its associations between friendship and smoking-related behavior during the post-intervention period, trying to add evidence to some conclusions of previous research as well as add insights to the field. A Stochastic Actor Oriented Models (SAOM) -based approach is employed here to conduct the longitudinal social network analysis. The findings show that there was no evidence for peer influence and peer selection regarding smoking-related behaviors in this school cohort during the observing periods. However, strong gender homophily, same school class homophily and cohesion tendency in terms of reciprocity, transitivity, dense triads were all found, which suggest that for the adolescent networks with no strong peer influence and peer selection regarding smoking behaviors.
+
+Key words: Smoking, Friendship, Adolescent, Co-evolution
+
+
+### Introduction
+
+Worldwide, the tobacco epidemic has been considered as one of the biggest public health threats from the last century, which kills more than 8 million people per year currently. A great number of adults are suffering the tobacco-related deceases. Studies have shown that more than 80% of adult smokers who smoke much reported that they started smoking before the age of eighteen and early signs of this illness can be found in young people who smoke. However, the number of smoking teenagers has risen remarkably in many countries from the 90s, while more and more adult has already realized the risk of smoking and quitted. Thus, reducing the smoking prevalence among adolescents is currently on top of priorities.
+
+
+On this purpose, many school-based smoking prevention programmes have been developed and conducted since 45 years ago (Thomas, McLellan, and Perera 2013), in which a method of peer support based on the mechanism of peer influence within a network is included. A report of the Surgeon General concludes that school-based interventions can reduce or postpone the smoking behavior among students by 20% to 40%. However, previous studies also pointed out that most effectiveness did not last, even some simply were not effective (Park 2006; Wiehe et al. 2005), as only a part of them showed the actual success. 
+
+
+The explanation of the variance of the smoking prevention effects are provided in many papers, and some indicate that the lack of effectiveness in the long term of peer-led approach is possible to occur in the school networks where friendship selection based on smoking behaviors is more important than peer influence (Steglich, Snijders, and Pearson 2010) as well as the networks where there is no significant peer influence effect. To further verify these findings, this paper investigates the network-smoking co-evolution in adolescence by using the panel data of a certain case in its post-intervention period, which is considered with no long-term effect. The case is about a three-year smoking prevention trial in a one-school cohort in a South Welsh secondary school, which belongs to a school-based peer-led program, ASSIST (A Stop Smoking in Schools Trial), conducted in the UK from 2001 to 2005. The design of the peer-led prevention approach is focusing on the direct and indirect effects of selected students who were trained to encourage smokers in the school cohort to stop smoking during a 10-week period. The research model is based on the longitudinal social network analysis, which makes it possible to get insight into the association between friendship and behavior within the adolescent network, in order to analyze whether friendship selection based on smoking behaviors is more important than peer influence.
+
+### Hypotheses
+
+There is a great number of empirical studies that have identified adolescent friendship as a primary factor involved in their smoking behaviors, including a conclusion that friends’ influence has in young people’s use of tobacco, in some cases developing use, and in other cases reducing it(Kobus 2003). Based on the previous studies, I assume that there is no significant peer influence regarding smoking-related behavior in this adolescent friendship network during the post-intervention period, which could be contributed to the fact that the decline of the number of smokers. In this case, the peer influence on smoking-related behaviors is interpreted as the mechanism that actors are influenced in their behavior, attitudes, performance by other actors to whom they are tied within a network (Friedkin 1998). That is, I expected that students’ smoking-related behaviors are generally not to be influenced by their friends’ related behavior within the school cohort.
+
+
+In addition to the mechanism of peer influence, its conjugate mechanism, that students prefer to make friends with someone who has the similar smoking-related behavior, can be also used to explain the lack of long-term effectiveness within this school cohort when its effect performs a more important role than peer influence in the progress of network evolution. Differences in people’s smoking behavior affected the allocation of their friendship groups (Engels et al. 1998). In this way, smokers tend to be closer to other smoker friends before they are actually affected by non-smokers to stop smoking. Thus, this is the second hypothesis that friendship selection based on smoking behaviors is more important than peer influence in this school cohort during the observing period.
+
+
+Besides investigating that why the effects of intervention cannot truly last in hypotheses 1 and 2, this paper also tries to explore the fact of the increasing number of students who started to smoke after intervention with respect to its association with the friendship network. A bunch of studies has indicated that teenagers’ positive attitudes toward tobacco using are considered as one of the primary factors to drive young people to start smoke or even smoke often(Engels et al. 1998). One of these attitudes is that youth always think smoking looks cool. Base on it, the third hypothesis here is that students who smoke are more popular at being nominated than students who never smoke or already quitted in this school cohort. The confirmation of the hypothesis would indicate the possibility of a long-term tendency of increasing smoker proportion.
+
+
+### Data
+
+The datasets were collected in the ASSIST (A Stop Smoking in Schools Trial) program conducted in the UK, which aimed to reduce adolescent smoking prevalence by the school-based, peer-led, smoking intervention. In this program, students in the fifty-nine randomly selected secondary schools were followed up for at least two years to see the effects of the intervention. Interviews and questionnaires were used to obtain data from participated students. This study evaluates a 3-wave penal dataset of a one school cohort in a Welsh secondary school starting at age 13-15 of participants in 2003, where a total of 211 students engaged, while 181 students were present at all three measurements. Up to 8 students were trained to encourage their classmates not to smoke during the intervention period.
+
+The networks of interest are about the friendship in this school cohort where the data was gathered at three points of time after the intervention period and the earliest one is collected immediately after the intervention. The ties stand for the friendship relation between students, which were measured by a way that students were asked to nominate up to six friends. If a student nominated another student as a friend, the value of a tie connecting these two students is coded one, otherwise, the value is code zero. Thus, the networks in this study are all directed with only positive ties.
+
+
+The smoking-related behavior was measured as three dimensions, which are smoking frequency behavior, attitude toward smoking, and intention to smoke. The data of smoking frequency and intention to smoke were collected at four data collection moments, where one of the four is pre-intervention. However, the data of attitude was collected only in the first three moments. Smoking frequency was measured on a 4-point scale from 1 (never smoked) to 4 (less than one cigarette a week). Intention to smoke was measured on a 3-point scale, where 1, 2, 3 present “yes”, “no”, “don’t know” respectively. Since the original scales of frequency and intention were hard to be interpreted as ordered, these two are redefined in the analysis that the frequency ranges from 1(don’t smoke now) to 2 (smoke now) and the intention ranges from 1 (“no”) to 2(“don’t know”) and 3(“yes”). Attitude toward smoking, measured as the average agreement with the six related items was rated on a 5-point scale from 1 (strongly disagree) to 5(strongly agree).
+
+
+In this study, the variable of frequency behavior during the three post-intervention moments is examined as the smoking behavior, and the attitude, as well as the intention in the immediate post-intervention point of time, are controlled to examine its effect on the frequency behavior. Other determinants of smoking, the gender (1 = Male) and school class membership of the students involved, were also collected and controlled as covariates in the analysis to control alternative selection processes, which are based on the mechanisms of gender homophily and school class homophily. In this case, they represent the preference to regard the students of the same gender and the students within the same school class as friends.
+
+
+### Method
+
+I use the approach based on the stochastic actor-oriented model (SAOM) to test the three hypothesizes. SAOM is currently the most popular method for modeling longitudinally observed networks, focusing on the co-evolution of network features and individual characteristics. The central part of SAOM is modeling the Ministeps which allows us to examine both selection and influence processes simultaneously. This analysis implements SAOM in R by using RSiena (Simulation Investigation for Empirical Network Analysis) package.
+
+
+In the models, the influence process part examines how the individual attributes are affected by the other individuals’ attributes who are connected, that is about who is influenced by whom? The main related component is the effect of friends’ smoking behavior on their own smoking behavior, where the similarity between the sender to the receiver and the similarity between the two mutually nominated friends are analyzed. The positive effect means the students tend to be more like their smoking friends. However, the insignificant effect is expected here to prove hypothesis 1.
+
+
+The selection process part is to examine how the individual attributes affect their connection choices, which is about who sends ties to whom. The related component is the effect of smoking behavior on the friendship choices, where the similarity between the sender to the receiver and the similarity between the two mutually nominated friends is analyzed as well. The positive effect means students tend to choose the students having similar smoking behavior as their friends. In order to test hypothesis 2, a spatial autocorrelation coefficient, Moran’s I, is introduced in the analysis. By comparing the average network autocorrelations of 1000 simulated networks of fitted models with coefficients estimated under different specifications and the observed network, whether friendship selection based on smoking behaviors is more important than peer influence can be illustrated. The five models are the full model including all the effects, the model omits only the effects about selection, the model omits only the effects about influence, the model omits both the two main effect and has the structural effects and controlled variables’ effects, and the baseline model with only structural effects. The expected result is that the average network autocorrelations of the selection model are closer to that of the observed network than the influence model.
+
+
+Besides, the effects of smoking behaviors on the number of outgoing ties and incoming ties are included as well to test hypothesis 3 regarding the popularity of smokers. A positive effect is expected. Other effects of participants’ attributes, which are attitude toward smoking, Intention to smoke, gender, and school class membership, are controlled in all models. All models also include the structural effects of the friendship network.
+
+
+### Results
+
+
+Figure 1 illustrates the distribution of smoking-related behaviors, frequency, attitude, intention, in the four measurement moments. Table 1 demonstrates the means of the three behavior variables, the share of females, as well as the means of the indegree, outdegree, and density of the friendship network for every three post-intervention moments. The smoking frequency and attitude saw both a slight decline after the intervention conducted immediately, while there was an obvious growth of intention to smoke. During the two post-intervention periods, the growth was found in all the three behaviors, where the last period saw the great increase of both frequency and intention. The fact that the peer-led intervention had short-term effectiveness but not for the long term, can be seen basically. As the smoking behavior (frequency) is the target individual attribute to study as the dependent variable, its changes during the 2 post-intervention periods are shown in Table 2, where the number of the up-changes is obviously larger than the number of down-changes.
+
+```{r,include=FALSE}
+#Create data frame and plot the distributions of the behaviors
+mydf <- rbind(melt(cbind(data.frame(sm.beh),name = rep("Behavior")),na.rm = T),
+              melt(cbind(data.frame(sm.att),name = rep("Attitude")),na.rm = T),
+              melt(cbind(data.frame(sm.int),name = rep("Intention")),na.rm = T))
+mydf$value <- round(mydf$value)
+mydf$variable <- as.factor(mydf$variable)
+mydf$value <- as.factor(mydf$value)
+```
+
+
+```{r,fig.cap="Obeserved Distribution of three smoking behaviors", fig.height=3, fig.width=5}
+ggplot(mydf, aes(x = variable))+
+  geom_bar(aes(fill=value),position = "fill")+
+  labs(y = "Percentage",
+       x = "Wave",
+       caption = "Data from ASSIST")+
+  facet_wrap(~ name)
+```
+
+```{r,include=FALSE}
+#Reset the levels of the attributes
+sm.int[sm.int == 1] <- 4
+sm.int[sm.int == 2] <- 1
+sm.int[sm.int == 3] <- 2
+sm.int[sm.int == 4] <- 3
+sm.beh[sm.beh < 4] <- 1
+sm.beh[sm.beh == 4] <- 2
+```
+
+
+```{r,include=FALSE}
+#Prepare the data of network
+fri_list <- list(friendship.dc2,friendship.dc3,friendship.dc4)
+my_vec <- c()
+for (i in 1:3) {
+  my_vec <- c(my_vec, which(fri_list[[i]][1,]==10))
+  my_vec <- unique(my_vec)
+}
+
+unp_1_2 <- which(respondent.pas[,1] == F& respondent.pas[,2] ==F)
+nan_stu <- unique(c(my_vec,unp_1_2))
+
+for (i in 1:3) {
+  fri_list[[i]] <- fri_list[[i]][-nan_stu,-nan_stu]
+}
+
+fri_w1 <-  fri_list[[1]]
+fri_w2 <-  fri_list[[2]]
+fri_w3 <-  fri_list[[3]]
+
+behavior <- sm.beh[-nan_stu,2:4]
+attitude <- round(sm.att[-nan_stu,1:3],2)
+intention <- sm.int[-nan_stu,2:4]
+sex <- ifelse(sex >1, 0,1)[-nan_stu]
+class <- form[-nan_stu,1]
+
+#Calculate the descriptive results
+indegree <- sapply(fri_list,function(data){mean(igraph::degree(
+  graph_from_adjacency_matrix(data,mode = "directed"),mode = "in"))})
+outdegree <- sapply(fri_list,function(data){mean(igraph::degree(
+  graph_from_adjacency_matrix(data,mode = "directed"),mode = "out"))})
+
+density <- sapply(fri_list,function(data){edge_density(graph_from_adjacency_matrix(data,mode = "directed"))})
+
+ave_frequence <- round(colMeans(behavior,na.rm = T),2)
+ave_attitude <- round(colMeans(attitude,na.rm = T),2)
+ave_intention <- round(colMeans(intention,na.rm = T),2)
+ave_female <- round(rep(mean(sex),3),2)
+
+df_periods <- round(t(data.frame(indegree, outdegree, density,ave_frequence,
+                         ave_attitude,ave_intention,ave_female)),2)
+colnames(df_periods) <- c("wave1","wave2","wave3")
+```
+
+```{r,results='asis'}
+#Create a table including the descriptives
+stargazer(df_periods, header = F, 
+          title = "Descriptives of networks and actor attributs in three post-interven waves",
+          notes = "Data from ASSIST")
+```
+
+```{r,include=FALSE}
+#Create a table showing the changes of the behaviors during the periods
+changes <- as.data.frame.matrix(t(t(round(table(sm.beh[,2],sm.beh[,4]),2))))
+
+```
+
+
+```{r,include=F}
+kable(changes, "latex", booktabs = T, 
+      caption = "Changes of Smoking frequences in three periods") %>%
+  footnote(general = "Data from ASSIST")
+```
+
+
+```{r,include=FALSE}
+#Prepare the data of the modeling results
+myfun <- function(results){
+  parameter <- results$effects$effectName
+  estimate <- results$theta
+  st.error <- sqrt(diag(results$covtheta))
+  normal.variate <- estimate/st.error
+  p.value.2sided <- 2*pnorm(abs(normal.variate),lower.tail=FALSE)
+  pm_model <- data.frame(parameter = parameter,
+                         estimate = round(estimate,3),
+                         p.value = round(p.value.2sided,3))
+  return(pm_model)
+}
+
+res_full <- myfun(results_full)
+res_full$id <- 1:22
+
+results_all <- merge(merge(merge(myfun(results_TC),myfun(results_TCI),
+                                 all = T, by = "parameter"),
+                           myfun(results_TCS),
+                           all = T, by = "parameter"),
+                     res_full,all = T, by = "parameter")
+
+results_all <- results_all[order(results_all[,"id"],decreasing=F),][,-10]
+
+rownames(results_all) <- results_all[,1]
+results_all <- results_all[,-1]
+
+colnames(results_all) <- c("estimete","p-value","estimete","p-value",
+                           "estimete","p-value","estimete","p-value")
+```
+
+
+```{r,results='asis'}
+#Create the table including all the results of the models
+kable(results_all, "latex", booktabs = T, longtable = T, 
+      caption = "SAOM analysis results with estimates and p-value, including selection part and influence part") %>%
+  kable_styling(latex_options = "scale_down") %>%
+  add_header_above(c(" " = 1, "TC" = 2, "TCI" = 2, "TCS" = 2, "TCSI" = 2)) %>%
+  pack_rows("Friendship network change: selection", 1, 14) %>%
+  pack_rows("Friendship network change: influence", 15, 22) %>%
+  kableExtra::landscape()
+```
+
+
+The results of the estimates and the p-values of the effects in all models are depicted in Table4, where the top part shows the estimates of selection-related effects and the bottom part is about the influence-related effects.
+
+
+In the section about the selection process, it is easy to find that all the four models show the significant negative effects of the outdegree and dense triads as well as the significant positive effects reciprocity and transitive triplets. This suggests the students generally didn’t tend to choose others as friends but tend to choose those who already regarded them as friends and those who are friends’ friends while being in the cohesive group are not their preference. Besides, the indegree-popularity is also significant and negative but slight, which means students who already have been nominated by many students are a bit less likely to receive more friendship nomination during the periods. The evidence of the strong preference regarding gender homophily and school class homophily in this school cohort is provided in the results, since the estimates of similarity in sex and school class are both positive and significant. That means students are more likely to nominate those who are of the same gender and nominate those within the classes, despite there is no evidence for the difference in the number of times to be nominated as friends across genders. As the effect of smoking behavior on the number of incoming ties is insignificant in both models, there is not enough evidence of the selection preference based on the receivers’ smoking behavior, therefore the third hypothesis is not supported. The effect of behavior similarity, whose positive estimate would suggest students tend to choose those who have a similar habit on smoking behavior, is significant only in the TCS model (where the influence process is omitted) but insignificant in the full model. Also, there is no evidence that smokers tend to nominate more friends or smokers are more like to mutually nominate each other.
+
+In the section about the influence process, no evidence is provided to indicate that students’ smoking behavior is influenced by friends’ smoking behavior. Thus, hypothesis 1 is confirmed that there was no significant peer influence on smoking behavior during the post-intervention periods. Moreover, the effects of gender and attitudes toward smoking are not significant in any model. Despite the negative influence of intention to smoke on smoking behavior is found in the TCI model(where the selection process is omitted), it changed to insignificant in the full model when the effects of selection preference based on smoking behavior are included.
+
+
+Overall, in the results of the four models, there is no evidence indicating that, during the post-intervention period, the changes in student’s smoking behavior could not predict the friendship choice and the friends’ smoking behavior. This could be due to the biases of the possible omitted individual attributes, such as parent smoking behavior, or due to the missing data of some key actors in this network. Nevertheless, the way comparing the Moran’s I of the simulated data of corresponding fitted models and observed data is still able to test the second hypothesis, as this design is based on assessing the relative closeness, regarding the magnitude of network autocorrelation, of simulated ones to the observed one. The resulting allocation of Moran’s I in this analysis plotting by violin distribution can be seen in Figure 2. The main models of interest are the TCS model and TCI model, which stand for the model with selection effect and the model with influence effect respectively.  What can be seen here is that the TCS model fits the observed value better than TCI, despite the observed value is located inside neither of their interquartile range which also suggests that there are factors of shaping the smoking behavior being omitted in the models. This result supports the second hypothesis that the friendship selection based on smoking behaviors is more important than peer influence in this school cohort during the observing period.
+
+```{r, fig.cap="Distribution of Moran’s I"}
+#Violin plot of the Moran’s I distribution of simulated networks 
+#and observed network
+
+observed <- gof_Mofull$Joint$Observations[1]
+require(vioplot)
+vioplot(simsCompared,col='lightgrey')
+lines(c(0.5,6),rep(observed,2),lwd=1,col='red')
+```
+
+
+
+### Discussion
+
+
+
+This paper aims to provide insights into the reasons why there was no long-term effectiveness of peer-led smoking prevention in certain adolescent friendship networks by examining the co-evolution of the corresponding adolescents’ friendship networks and smoking behavior. The findings support the hypothesis that the students’ smoking-related behaviors are generally not to be influenced by their friends’ related behavior within the school cohort. At the same time, in this cohort, the friendship selection based on smoking behaviors is more important than peer influence in this school cohort during the observing period. However, the selection preference was not found to be significant. As the limited variables were included in the models, the results of the goodness of fit regarding the distribution of indegrees, outdegrees, and triad census didn’t show a well-fitting. Thus, there could be some biases of the omitted variables, such as the class-level effects. Moreover, the findings suggest that to improve the long-term effectiveness of smoking prevention in adolescents, it is important to re-evaluate the relationship between the related-behaviors and the friendship to design the more effective methods accordingly.
+
+
+```{r}
+#Goodness of fit for triad census 
+
+plot(gof_triads,center=TRUE,scale=TRUE)
+
+#Goodness of fit for indegrees 
+
+
+plot(gof_indegrees)
+
+#Goodness of fit for outdegrees
+
+
+plot(gof_outdegrees)
+
+```
+
+\pagebreak
+
+### References
+
+Engels, Rutger C. M. E., Ronald A. Knibbe, Hein de Vries, and Maria J. Drop. 1998. ‘Antecedents of Smoking Cessation among Adolescents: Who Is Motivated to Change?’ Preventive Medicine 27(3):348–57.
+
+
+Friedkin, Noah E. 1998. ‘A Structural Theory of Social Influence’. Cambridge Core. Retrieved 28 March 2020 (/core/books/structural-theory-of-social-influence/5938F144BE35810A377FF3E795A3555C).
+
+
+Kobus, Kimberly. 2003. ‘Peers and Adolescent Smoking’. Addiction 98(s1):37–55.
+
+
+Park, Eunok. 2006. ‘School-Based Smoking Prevention Programs for Adolescents in South Korea: A Systematic Review’.
+
+
+Steglich, Christian, Tom A. B. Snijders, and Michael Pearson. 2010. ‘8. Dynamic Networks and Behavior: Separating Selection from Influence’. Sociological Methodology 40(1):329–93.
+
+
+Thomas, Roger E., Julie McLellan, and Rafael Perera. 2013. ‘School-Based Programmes for Preventing Smoking’ edited by Cochrane Tobacco Addiction Group. Cochrane Database of Systematic Reviews.
+
+
+Wiehe, Sarah E., Michelle M. Garrison, Dimitri A. Christakis, Beth E. Ebel, and Frederick P. Rivara. 2005. ‘A Systematic Review of School-Based Smoking Prevention Trials with Long-Term Follow-Up’. Journal of Adolescent Health 36(3):162–69.
