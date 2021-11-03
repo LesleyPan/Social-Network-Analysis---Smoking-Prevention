@@ -1,0 +1,449 @@
+---
+title: "SNA Final Paper"
+author: "Liyu Pan"
+date: "3/24/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, error = F, warning = F)
+```
+
+```{r, include=FALSE}
+setwd("C:/Users/LiyuP/Desktop/SNA final")
+load("ASSIST-c21.RData")
+
+library(tidyverse)
+library(RSiena)
+library(reshape2)
+library(kableExtra)
+library(igraph)
+library(sna)
+library(stargazer)
+```
+
+
+```{r,include=FALSE}
+#Reset the levels of the attributes
+sm.int[sm.int == 1] <- 4
+sm.int[sm.int == 2] <- 1
+sm.int[sm.int == 3] <- 2
+sm.int[sm.int == 4] <- 3
+sm.beh[sm.beh < 4] <- 1
+sm.beh[sm.beh == 4] <- 2
+
+#Create data frame and plot the distributions of the behaviors
+mydf <- rbind(melt(cbind(data.frame(sm.beh),name = rep("Behavior")),na.rm = T),
+              melt(cbind(data.frame(sm.att),name = rep("Attitude")),na.rm = T),
+              melt(cbind(data.frame(sm.int),name = rep("Intention")),na.rm = T))
+mydf$value <- round(mydf$value)
+mydf$variable <- as.factor(mydf$variable)
+mydf$value <- as.factor(mydf$value)
+ggplot(mydf, aes(x = variable))+
+  geom_bar(aes(fill=value),position = "fill")+
+  labs(y = "Percentage",
+       x = "Wave",
+       title = "Obeserved Distribution of three smoking behaviors")+
+  facet_wrap(~ name)
+```
+
+
+```{r,results='asis'}
+#Create a table showing the changes of the behaviors during the periods
+changes_12 <- as.data.frame.matrix(t(round(table(sm.beh[,1],sm.beh[,2]),2)))
+changes_23 <- as.data.frame.matrix(t(round(table(sm.beh[,2],sm.beh[,3]),2)))
+changes_34 <- as.data.frame.matrix(t(round(table(sm.beh[,3],sm.beh[,4]),2)))
+changes_all <- rbind(changes_12, changes_23,changes_34)
+row.names(changes_all) <- c("1non-smoker","1smoker","2non-smoker","2smoker","3non-smoker","3smoker")
+colnames(changes_all) <- c("non-smoker","smoker")
+stargazer(changes_all, header = F, title = "Changes of Smoking frequences in three periods")
+```
+
+
+```{r,include=FALSE}
+#Prepare the data of network
+fri_list <- list(friendship.dc2,friendship.dc3,friendship.dc4)
+my_vec <- c()
+for (i in 1:3) {
+  my_vec <- c(my_vec, which(fri_list[[i]][1,]==10))
+  my_vec <- unique(my_vec)
+}
+
+unp_1_2 <- which(respondent.pas[,1] == F& respondent.pas[,2] ==F)
+nan_stu <- unique(c(my_vec,unp_1_2))
+
+for (i in 1:3) {
+  fri_list[[i]] <- fri_list[[i]][-nan_stu,-nan_stu]
+}
+
+fri_w1 <-  fri_list[[1]]
+fri_w2 <-  fri_list[[2]]
+fri_w3 <-  fri_list[[3]]
+
+behavior <- sm.beh[-nan_stu,2:4]
+attitude <- round(sm.att[-nan_stu,1:3],2)
+intention <- sm.int[-nan_stu,2:4]
+sex <- ifelse(sex >1, 0,1)[-nan_stu]
+class <- form[-nan_stu,1]
+
+#Calculate the descriptive results
+indegree <- sapply(fri_list,function(data){mean(igraph::degree(
+  graph_from_adjacency_matrix(data,mode = "directed"),mode = "in"))})
+outdegree <- sapply(fri_list,function(data){mean(igraph::degree(
+  graph_from_adjacency_matrix(data,mode = "directed"),mode = "out"))})
+
+density <- sapply(fri_list,function(data){edge_density(graph_from_adjacency_matrix(data,mode = "directed"))})
+
+ave_frequence <- round(colMeans(behavior,na.rm = T),2)
+ave_attitude <- round(colMeans(attitude,na.rm = T),2)
+ave_intention <- round(colMeans(intention,na.rm = T),2)
+ave_female <- round(rep(mean(sex),3),2)
+
+df_periods <- round(t(data.frame(indegree, outdegree, density,ave_frequence,
+                         ave_attitude,ave_intention,ave_female)),2)
+colnames(df_periods) <- c("wave1","wave2","wave3")
+```
+
+
+```{r,results='asis'}
+#Create a table including the descriptives
+stargazer(df_periods, header = F, 
+          title = "Descriptives of networks and actor attributs in three post-interven waves")
+```
+
+
+
+```{r,include=FALSE}
+#Prepare the variables of the network and behavior for SOAM modeling
+dy_friendship <- sienaDependent(array(c(fri_w1,fri_w2,fri_w3),
+	dim=c(dim(fri_w1),3)))
+
+dy_behavior <- sienaDependent(behavior, type = "behavior")
+
+#Add control variables
+co_att <- varCovar(attitude)
+co_int <- varCovar(intention)
+co_sex <- coCovar(sex)
+co_class <- coCovar(c(as.factor(class)))
+
+#Combine the data for siena
+data_coe <- sienaDataCreate(dy_friendship,dy_behavior,co_sex,co_att,co_int,co_class)
+
+model_coe <- getEffects(data_coe)
+
+print01Report(data_coe, modelname="Composition-illustration")
+
+```
+
+
+```{r,include=FALSE}
+#Create the full model including all the effects
+
+#Selection effects
+model_full <- includeEffects(model_coe, altX, egoX, simX, simRecipX,
+                         interaction1 = "dy_behavior",
+                         name = "dy_friendship")
+
+#Influence effects
+model_full <- includeEffects(model_full, avSim, avSimRecip,
+                         interaction1 = "dy_friendship",
+                         name = "dy_behavior")
+#Gender homopholiy
+model_full <- includeEffects(model_full, altX, simX,
+                         interaction1="co_sex",
+                         name="dy_friendship")
+#School class homopholiy
+model_full <- includeEffects(model_full, simX,
+                         interaction1="co_class",
+                         name="dy_friendship")
+
+#gender effect on the behavior
+model_full <- includeEffects(model_full, effFrom,
+                         interaction1 = "co_sex",
+                         name = "dy_behavior")
+#attitude effect on the behavior
+model_full <- includeEffects(model_full, effFrom,
+                         interaction1 = "co_att",
+                         name = "dy_behavior")
+#Intention effect on the behavior
+model_full <- includeEffects(model_full, effFrom,
+                         interaction1 = "co_int",
+                         name = "dy_behavior")
+
+#Structrual effects
+model_full <- includeEffects(model_full, recip, transTrip,
+                         denseTriads, inPop,
+                         name = "dy_friendship")
+model_full
+```
+
+
+
+
+```{r, include=FALSE}
+#Create the TC model including the control effects and structrual effects
+
+model_TC <- includeEffects(model_coe, altX, simX,
+                         interaction1="co_sex",
+                         name="dy_friendship")
+
+model_TC <- includeEffects(model_TC, simX,
+                         interaction1="co_class",
+                         name="dy_friendship")
+
+model_TC <- includeEffects(model_TC, effFrom,
+                         interaction1 = "co_sex",
+                         name = "dy_behavior")
+
+model_TC <- includeEffects(model_TC, effFrom,
+                         interaction1 = "co_att",
+                         name = "dy_behavior")
+
+model_TC <- includeEffects(model_TC, effFrom,
+                         interaction1 = "co_int",
+                         name = "dy_behavior")
+
+model_TC <- includeEffects(model_TC, recip, transTrip,
+                         denseTriads, inPop,
+                         name = "dy_friendship")
+model_TC
+```
+
+
+
+
+```{r, include=FALSE}
+#Create the TCS model where the influence effects are omitted
+
+model_TCS <- includeEffects(model_coe, altX, egoX, simX, simRecipX,
+                         interaction1 = "dy_behavior",
+                         name = "dy_friendship")
+
+model_TCS <- includeEffects(model_TCS, altX, simX,
+                         interaction1="co_sex",
+                         name="dy_friendship")
+
+model_TCS <- includeEffects(model_TCS, simX,
+                         interaction1="co_class",
+                         name="dy_friendship")
+
+model_TCS <- includeEffects(model_TCS, effFrom,
+                         interaction1 = "co_sex",
+                         name = "dy_behavior")
+
+model_TCS <- includeEffects(model_TCS, effFrom,
+                         interaction1 = "co_att",
+                         name = "dy_behavior")
+
+model_TCS <- includeEffects(model_TCS, effFrom,
+                         interaction1 = "co_int",
+                         name = "dy_behavior")
+
+model_TCS <- includeEffects(model_TCS, recip, transTrip,
+                         denseTriads, inPop,
+                         name = "dy_friendship")
+model_TCS
+```
+
+
+```{r, include=FALSE}
+#Create the TCI model where the selection effects are omitted
+
+model_TCI <- includeEffects(model_coe, avSim, avSimRecip,
+                         interaction1 = "dy_friendship",
+                         name = "dy_behavior")
+
+model_TCI <- includeEffects(model_TCI, altX, simX,
+                         interaction1="co_sex",
+                         name="dy_friendship")
+
+model_TCI <- includeEffects(model_TCI, simX,
+                         interaction1="co_class",
+                         name="dy_friendship")
+
+
+model_TCI <- includeEffects(model_TCI, effFrom,
+                         interaction1 = "co_sex",
+                         name = "dy_behavior")
+
+model_TCI <- includeEffects(model_TCI, effFrom,
+                         interaction1 = "co_att",
+                         name = "dy_behavior")
+
+model_TCI <- includeEffects(model_TCI, effFrom,
+                         interaction1 = "co_int",
+                         name = "dy_behavior")
+
+
+model_TCI <- includeEffects(model_TCI, recip, transTrip,
+                         denseTriads, inPop,
+                         name = "dy_friendship")
+model_TCI
+```
+
+
+```{r, include=FALSE}
+#Model-T: Structrual effects
+model_T <- includeEffects(model_coe, recip, transTrip,
+                         denseTriads, inPop,
+                         name = "dy_friendship")
+model_T
+```
+
+
+```{r,include=FALSE}
+#create an object with options for algorithm tuning
+options_coe <- sienaAlgorithmCreate(useStdInits=FALSE,
+	projname='CoEvol_results',seed=136862)
+
+#Estimate the five model
+results_full <- siena07(options_coe,data=data_coe,
+	effects=model_full,batch=TRUE,verbose=TRUE,
+	useCluster=TRUE,nbrNodes=7)
+
+
+results_TCS <- siena07(options_coe,data=data_coe,
+	effects=model_TCS,batch=TRUE,verbose=TRUE,
+	useCluster=TRUE,nbrNodes=7)
+
+
+results_TCI <- siena07(options_coe,data=data_coe,
+	effects=model_TCI,batch=TRUE,verbose=TRUE,
+	useCluster=TRUE,nbrNodes=7)
+
+results_TC <- siena07(options_coe,data=data_coe,
+	effects=model_TC,batch=TRUE,verbose=TRUE,
+	useCluster=TRUE,nbrNodes=7)
+ 
+results_T <- siena07(options_coe,data=data_coe,
+	effects=model_T,batch=TRUE,verbose=TRUE,
+	useCluster=TRUE,nbrNodes=7)
+```
+
+```{r,include=FALSE}
+#Prepare the data of the modeling results
+myfun <- function(results){
+  parameter <- results$effects$effectName
+  estimate <- results$theta
+  st.error <- sqrt(diag(results$covtheta))
+  normal.variate <- estimate/st.error
+  p.value.2sided <- 2*pnorm(abs(normal.variate),lower.tail=FALSE)
+  pm_model <- data.frame(parameter = parameter,
+                         estimate = round(estimate,3),
+                         p.value = round(p.value.2sided,4))
+  return(pm_model)
+}
+
+res_full <- myfun(results_full)
+res_full$id <- 1:22
+
+results_all <- merge(merge(merge(myfun(results_TC),myfun(results_TCI),
+                                 all = T, by = "parameter"),
+                           myfun(results_TCS),
+                           all = T, by = "parameter"),
+                     res_full,all = T, by = "parameter")
+
+results_all <- results_all[order(results_all[,"id"],decreasing=F),][,-10]
+
+rownames(results_all) <- results_all[,1]
+results_all <- results_all[,-1]
+
+colnames(results_all) <- c("estimete","p-value","estimete","p-value",
+                           "estimete","p-value","estimete","p-value")
+```
+
+
+```{r,results='asis'}
+#Create the table including all the results of the models
+kable(results_all, "latex", booktabs = T,
+      caption = "SAOM analysis results with estimates and p-value, including selection part and influence part") %>%
+  kable_styling(full_width = T) %>%
+  add_header_above(c(" " = 1, "TC" = 2, "TCI" = 2, "TCS" = 2, "TCSI" = 2)) %>%
+  pack_rows("Friendship network change: selection", 1, 14) %>%
+  pack_rows("Friendship network change: influence", 15, 22)
+```
+
+
+```{r,include=FALSE}
+sim_options <- sienaAlgorithmCreate(useStdInits=FALSE,cond=FALSE,
+	n3=1000,nsub=0,seed=249773)
+
+sim_results_full <- siena07(sim_options,data=data_coe,
+                       effects=model_full,batch=FALSE,verbose=FALSE,
+                       returnDeps=TRUE,prevAns=results_full)
+
+sim_results_TCS <- siena07(sim_options,data=data_coe,
+                       effects=model_TCS,batch=FALSE,verbose=FALSE,
+                       returnDeps=TRUE,prevAns=results_TCS)
+
+sim_results_TCI <- siena07(sim_options,data=data_coe,
+                       effects=model_TCI,batch=FALSE,verbose=FALSE,
+                       returnDeps=TRUE,prevAns=results_TCI)
+
+sim_results_TC <- siena07(sim_options,data=data_coe,
+                       effects=model_TC,batch=FALSE,verbose=FALSE,
+                       returnDeps=TRUE,prevAns=results_TC)
+
+sim_results_T <- siena07(sim_options,data=data_coe,
+                       effects=model_T,batch=FALSE,verbose=FALSE,
+                       returnDeps=TRUE,prevAns=results_T)
+
+
+source("sienaGOF-coevolution.R")
+
+gof_Mofull <- sienaGOF(sim_results_full,Moran123,
+                      verbose=TRUE,join=TRUE,varName=c("dy_friendship","dy_behavior"))
+
+gof_MoTCS <- sienaGOF(sim_results_TCS,Moran123,
+                      verbose=TRUE,join=TRUE,varName=c("dy_friendship","dy_behavior"))
+
+gof_MoTCI <- sienaGOF(sim_results_TCI,Moran123,
+                      verbose=TRUE,join=TRUE,varName=c("dy_friendship","dy_behavior"))
+
+gof_MoTC <- sienaGOF(sim_results_TC,Moran123,
+                      verbose=TRUE,join=TRUE,varName=c("dy_friendship","dy_behavior"))
+
+gof_MoT <- sienaGOF(sim_results_T,Moran123,
+                      verbose=TRUE,join=TRUE,varName=c("dy_friendship","dy_behavior"))
+
+simsCompared <- data.frame(TCSI= gof_Mofull$Joint$Simulations[,1],
+                           TCS= gof_MoTCS$Joint$Simulations[,1],
+                           TCI= gof_MoTCI$Joint$Simulations[,1],
+                           TC= gof_MoTC$Joint$Simulations[,1],
+                           T= gof_MoT$Joint$Simulations[,1])
+```
+
+
+```{r}
+#Violin plot of the Moran’s I distribution of simulated networks 
+#and observed network
+
+observed <- gof_Mofull$Joint$Observations[1]
+require(vioplot)
+vioplot(simsCompared,col='lightgrey')
+lines(c(0.5,6),rep(observed,2),lwd=1,col='red')
+title("Distribution of Moran’s I")
+
+#Goodness of fit for triad census 
+gof_triads <- sienaGOF(sim_results_full,TriadCensus,
+	verbose=TRUE,join=TRUE,varName="dy_friendship")
+
+plot(gof_triads,center=TRUE,scale=TRUE)
+
+#Goodness of fit for indegrees 
+gof_indegrees <- sienaGOF(sim_results_full,IndegreeDistribution,
+	verbose=TRUE,join=TRUE,varName="dy_friendship")
+
+plot(gof_indegrees)
+
+#Goodness of fit for outdegrees
+gof_outdegrees <- sienaGOF(sim_results_full,OutdegreeDistribution,
+	verbose=TRUE,join=TRUE,varName="dy_friendship")
+
+plot(gof_outdegrees)
+
+#Save the data
+save.image("SNA Final results.RData")
+
+```
+
